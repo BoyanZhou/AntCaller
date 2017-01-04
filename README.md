@@ -4,7 +4,7 @@ SNP calling and genotyping for damaged ancient DNA
 # Usage
 1. This program can only be used for SAM/BAM files with MD field under Linux system.
 2. Copy three .py files to the directory where SAM/BAM files are stored.
-3. Print "python AntCaller-1.1.py -help" for detailed usage information.
+3. Print "python AntCaller-1.0.py -help" for detailed usage information.
 4. SNP calling can only be performed after extracting damage information and pileuping reads.
 
 # Examples
