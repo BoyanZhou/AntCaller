@@ -35,3 +35,6 @@ SNP calling and genotyping for damaged ancient DNA
   3) SNP calling, output vcf file
   
   python AntCaller-1.0.py --snpcalling -o example -d example.damageinfo -f example.AntCaller.pileup
+
+# Contact
+For any problems, please contact boyanzhou1992@gmail.com
