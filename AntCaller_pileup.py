@@ -5,6 +5,9 @@ import sys
 import re
 cigar_mode = re.compile("([0-9]*)([A-Z])")
 
+def cut(x):
+    return str(x).lstrip("[").rstrip("]")
+
 #   define the function of pileup a read
 def pileup(inread, inref, inquals, inMquals, inpos, inend5, inend3):
     for e in range(len(inread)):
@@ -60,7 +63,7 @@ for line in sys.stdin:
     flag = col[1]
     if col[2] != chromosome and chromosome:
         while poslist:
-            print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t' + Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t' + str(end5list.pop(0)) + '\t' + str(end3list.pop(0)) + '\t' + str(Mqualist.pop(0)))
+            print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t' + Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t' + cut(end5list.pop(0)) + '\t' + cut(end3list.pop(0)) + '\t' + cut(Mqualist.pop(0)))
     chromosome = col[2]
     position = int(col[3])
     MAPQ = int(col[4])
@@ -80,22 +83,19 @@ for line in sys.stdin:
     mdlist = re.findall('(\d+|\D+)', MD)
 
 #   determine if the read is reverse
+    reverse = False
     if flag.isdigit():
         if int(flag) & 16:
             reverse = True
-        else:
-            reverse = False
     else:
         if 'r' in flag:
             reverse = True
-        elif 'r' not in flag:
-            reverse = False
 #   end determine if the read is reverse
 
 
 #   output the pileup
     while poslist and poslist[0] < position:
-        print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t' + Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t' + str(end5list.pop(0)) + '\t' + str(end3list.pop(0)) + '\t' + str(Mqualist.pop(0)))
+        print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t' + Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t' + cut(end5list.pop(0)) + '\t' + cut(end3list.pop(0)) + '\t' + cut(Mqualist.pop(0)))
 #   end output the pileup
 
 
@@ -157,7 +157,15 @@ for line in sys.stdin:
             pos_inref.append(refcount)
             refcount += 1
 
+    if reverse:
+        newread = newread.lower()
+        end_midlle = end3[:]
+        end3 = end5[:]
+        end5 = end_midlle[:]
+    else:
+        newread = newread.upper()
+
     pileup(newread, ref, newquals, MAPQ, pos_inref, end5, end3)
 
 while poslist:
-        print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t'+ Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t'+ str(end5list.pop(0)) + '\t' + str(end3list.pop(0)) + '\t' + str(Mqualist.pop(0)))
+    print (chromosome + '\t' + str(poslist.pop(0)) + '\t' + reflist.pop(0) + '\t' + str(countlist.pop(0)) + '\t'+ Ntlist.pop(0) + '\t' + qualist.pop(0) + '\t'+ cut(end5list.pop(0)) + '\t' + cut(end3list.pop(0)) + '\t' + cut(Mqualist.pop(0)))

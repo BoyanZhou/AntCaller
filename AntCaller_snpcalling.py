@@ -69,9 +69,9 @@ for line in f1:
 
     Nt = col[4]
     quals = col[5]
-    pos5 = re.findall('\d+', col[6])
-    pos3 = re.findall('\d+', col[7])
-    Mquals = re.findall('\d+', col[8])
+    pos5 = col[6].split(',')
+    pos3 = col[7].split(',')
+    Mquals = col[8].split(',')
     p = 0.01
 
     genotype = ['AA', 'AG', 'AC', 'AT', 'GG', 'GC', 'GT', 'CC', 'CT', 'TT']
@@ -86,36 +86,63 @@ for line in f1:
 #   calculate p(D|G)
     p_DG = np.array([1.0]*10)
     for n in range(count):
-        r = error(quals[n]) + 0.01 + 1.0/pow(10.0, int(Mquals[n])/10.0)
+        r = error(quals[n]) + 0.001 + 1.0/pow(10.0, int(Mquals[n])/10.0)
+        if r > 0.2:
+            continue
         q = g2a_rate[int(pos3[n]) - 1]
         p = c2t_rate[int(pos5[n]) - 1]
-        if Nt[n] == 'A':
+
+        if Nt[n] == 'A' or Nt[n] == 'a':
             A_count += 1
-            pA = 1.0 - r
-            pG = (1.0 - r)*q + (1.0 - q)*r/3.0
-            pC = r/3.0
-            pT = r/3.0
+            if Nt[n] == 'A':
+                pA = 1.0 - r
+                pG = (1.0 - r)*q + (1.0 - q)*r/3.0
+                pC = r/3.0
+                pT = r/3.0
+            else:
+                pA = 1.0 - r
+                pG = p*(1.0 - r) + r*(1.0 - p)/3.0
+                pC = r/3.0
+                pT = r/3.0
             p_DG *= np.array([pA, 0.5*pA + 0.5*pG, 0.5*pA + 0.5*pC, 0.5*pA + 0.5*pT, pG, 0.5*pG + 0.5*pC, 0.5*pG + 0.5*pT, pC, 0.5*pC + 0.5*pT, pT])
-        elif Nt[n] == 'G':
+        elif Nt[n] == 'G' or Nt[n] == 'g':
             G_count += 1
-            pA = r/3.0
-            pG = (1.0 - q)*(1.0 - r) + r*q/3.0
-            pC = r/3.0
-            pT = r/3.0
+            if Nt[n] == 'G':
+                pA = r/3.0
+                pG = (1.0 - q)*(1.0 - r) + r*q/3.0
+                pC = r/3.0
+                pT = r/3.0
+            else:
+                pA = r/3.0
+                pG = (1.0 - p)*(1.0 - r) + r*p/3.0
+                pC = r/3.0
+                pT = r/3.0
             p_DG *= np.array([pA, 0.5*pA + 0.5*pG, 0.5*pA + 0.5*pC, 0.5*pA + 0.5*pT, pG, 0.5*pG + 0.5*pC, 0.5*pG + 0.5*pT, pC, 0.5*pC + 0.5*pT, pT])
-        elif Nt[n] == 'C':
+        elif Nt[n] == 'C' or Nt[n] == 'c':
             C_count += 1
-            pA = r/3.0
-            pG = r/3.0
-            pC = (1.0 - p)*(1.0 - r) + r*p/3.0
-            pT = r/3.0
+            if Nt[n] == 'C':
+                pA = r/3.0
+                pG = r/3.0
+                pC = (1.0 - p)*(1.0 - r) + r*p/3.0
+                pT = r/3.0
+            else:
+                pA = r/3.0
+                pG = r/3.0
+                pC = (1.0 - q)*(1.0 - r) + r*q/3.0
+                pT = r/3.0
             p_DG *= np.array([pA, 0.5*pA + 0.5*pG, 0.5*pA + 0.5*pC, 0.5*pA + 0.5*pT, pG, 0.5*pG + 0.5*pC, 0.5*pG + 0.5*pT, pC, 0.5*pC + 0.5*pT, pT])
-        elif Nt[n] == 'T':
+        elif Nt[n] == 'T' or Nt[n] == 't':
             T_count += 1
-            pA = r/3.0
-            pG = r/3.0
-            pC = p*(1.0 - r) + r*(1.0 - p)/3.0
-            pT = 1.0 - r
+            if Nt[n] == 'T':
+                pA = r/3.0
+                pG = r/3.0
+                pC = p*(1.0 - r) + r*(1.0 - p)/3.0
+                pT = 1.0 - r
+            else:
+                pA = r/3.0
+                pG = r/3.0
+                pC = (1.0 - r)*q + (1.0 - q)*r/3.0
+                pT = 1.0 - r
             p_DG *= np.array([pA, 0.5*pA + 0.5*pG, 0.5*pA + 0.5*pC, 0.5*pA + 0.5*pT, pG, 0.5*pG + 0.5*pC, 0.5*pG + 0.5*pT, pC, 0.5*pC + 0.5*pT, pT])
         else:
             continue
@@ -211,7 +238,14 @@ for line in f1:
             Sample1 = '0/0:' + str(G_count) + ',' + str(A_count + C_count + T_count) + ':' + str(count) + ':' + str(Qual) + ':' + str(PL)
             f2.write(chromosome + '\t' + position + '\t' + '.' + '\t' + ref + '\t' + ALT + '\t' + str(Qual) + '\t' + '.' + '\t' + INFO + '\t' + FORMAT + '\t' + Sample1 + '\n')
         if alt != 'GG':
-            Qual = round(-10.0 * math.log(p_GD[4], 10.0),2)
+            try:
+                Qual = round(-10.0 * math.log(p_GD[4], 10.0),2)
+            except ValueError:
+                print(p_G)
+                print(p_DG)
+                print(p_GD)
+                print(line)
+                break
             if Qual < options.quality:
                 continue
             if ref in alt:
@@ -420,4 +454,6 @@ for line in f1:
                 f2.write(chromosome + '\t' + position + '\t' + '.' + '\t' + ref + '\t' + ALT + '\t' + str(Qual) + '\t' + '.' + '\t' + INFO + '\t' + FORMAT + '\t' + Sample1 + '\n')
 f1.close()
 f2.close()
+if os.path.exists(options.filename):
+    os.remove(options.filename)
 

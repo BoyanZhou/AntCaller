@@ -4,7 +4,6 @@ from optparse import OptionParser
 from optparse import OptionGroup
 from multiprocessing.dummy import Pool as ThreadPool
 import numpy as np
-import time
 import sys
 import math
 import os
@@ -34,7 +33,6 @@ parser.add_option("-o", "--outputprefix", action="store", type="string", dest="o
 parser.add_option("-t", "--thread", action="store", type="int", dest="thread",help="the number of thread (not for extracting damage information )", default=5)
 (options, args) = parser.parse_args()
 
-time_start = time.time()
 wdpath = os.getcwd()
 
 #   program of pileup
@@ -359,9 +357,9 @@ if options.snpcalling:
 
             Nt = col[4]
             quals = col[5]
-            pos5 = re.findall('\d+', col[6])
-            pos3 = re.findall('\d+', col[7])
-            Mquals = re.findall('\d+', col[8])
+            pos5 = col[6].split(',')
+            pos3 = col[7].split(',')
+            Mquals = col[8].split(',')
 
             genotype = ['A', 'G', 'C', 'T']
 
@@ -376,33 +374,62 @@ if options.snpcalling:
             p_T = 1
 
             for n in range(count):
-                r = error(quals[n]) + 0.01 + 1.0/pow(10.0, int(Mquals[n])/10.0)
+                r = error(quals[n]) + 0.001 + 1.0/pow(10.0, int(Mquals[n])/10.0)
+                if r > 0.2:
+                    continue
                 q = g2a_rate[int(pos3[n]) - 1]
                 p = c2t_rate[int(pos5[n]) - 1]
-                if Nt[n] == 'A':
+                if Nt[n] == 'A' or Nt[n] == 'a':
                     A_count += 1
-                    p_A *= 1.0 - r
-                    p_G *= (1.0 - r)*q + r*(1.0-q)/3.0
-                    p_C *= r/3.0
-                    p_T *= r/3.0
-                elif Nt[n] == 'G':
+                    if Nt[n] == 'A':
+                        p_A *= 1.0 - r
+                        p_G *= (1.0 - r)*q + r*(1.0-q)/3.0
+                        p_C *= r/3.0
+                        p_T *= r/3.0
+                    else:
+                        p_A *= 1.0 - r
+                        p_G *= p*(1.0 - r) + r*(1.0 - p)/3.0
+                        p_C *= r/3.0
+                        p_T *= r/3.0
+
+                elif Nt[n] == 'G' or Nt[n] == 'g':
                     G_count += 1
-                    p_A *= r/3.0
-                    p_G *= (1.0 - q)*(1.0 - r) + r*q/3.0
-                    p_C *= r/3.0
-                    p_T *= r/3.0
-                elif Nt[n] == 'C':
+                    if Nt[n] == 'G':
+                        p_A *= r/3.0
+                        p_G *= (1.0 - q)*(1.0 - r) + r*q/3.0
+                        p_C *= r/3.0
+                        p_T *= r/3.0
+                    else:
+                        p_A *= r/3.0
+                        p_G *= (1.0 - p)*(1.0 - r) + r*p/3.0
+                        p_C *= r/3.0
+                        p_T *= r/3.0
+
+                elif Nt[n] == 'C' or Nt[n] == 'c':
                     C_count += 1
-                    p_A *= r/3.0
-                    p_G *= r/3.0
-                    p_C *= (1.0 - p)*(1.0 - r) + r*p/3.0
-                    p_T *= r/3.0
-                elif Nt[n] == 'T':
+                    if Nt[n] == 'C':
+                        p_A *= r/3.0
+                        p_G *= r/3.0
+                        p_C *= (1.0 - p)*(1.0 - r) + r*p/3.0
+                        p_T *= r/3.0
+                    else:
+                        p_A *= r/3.0
+                        p_G *= r/3.0
+                        p_C *= (1.0 - q)*(1.0 - r) + r*q/3.0
+                        p_T *= r/3.0
+
+                elif Nt[n] == 'T' or Nt[n] == 't':
                     T_count += 1
-                    p_A *= r/3.0
-                    p_G *= r/3.0
-                    p_C *= p*(1.0 - r) + r*(1.0 - p)/3.0
-                    p_T *= 1.0 - r
+                    if Nt[n] == 'T':
+                        p_A *= r/3.0
+                        p_G *= r/3.0
+                        p_C *= p*(1.0 - r) + r*(1.0 - p)/3.0
+                        p_T *= 1.0 - r
+                    else:
+                        p_A *= r/3.0
+                        p_G *= r/3.0
+                        p_C *= (1.0 - r)*q + r*(1.0-q)/3.0
+                        p_T *= 1.0 - r
                 else:
                     continue
 
@@ -444,7 +471,5 @@ if options.snpcalling:
                 f2.write(chromosome + '\t' + position + '\t' + '.' + '\t' + ref + '\t' + ALT + '\t' + str(Qual) + '\t' + '.' + '\t' + INFO + '\t' + FORMAT + '\t' + Sample1 + '\n')
 
         f2.close()
-
-
-time_end = time.time()
-print("running time of AntCaller:" + str(time_end - time_start))
+    if os.path.exists(options.pileupfile):
+        os.remove(options.pileupfile)
