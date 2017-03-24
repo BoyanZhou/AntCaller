@@ -454,6 +454,5 @@ for line in f1:
                 f2.write(chromosome + '\t' + position + '\t' + '.' + '\t' + ref + '\t' + ALT + '\t' + str(Qual) + '\t' + '.' + '\t' + INFO + '\t' + FORMAT + '\t' + Sample1 + '\n')
 f1.close()
 f2.close()
-if os.path.exists(options.filename):
-    os.remove(options.filename)
+
 
