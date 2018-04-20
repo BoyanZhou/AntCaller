@@ -147,6 +147,7 @@ for line in f1:
         else:
             continue
 
+    p_DG = [1.000000000000017e-308 if q == 0 else q for q in p_DG]
     p_GD = (p_G*p_DG)/sum(p_G*p_DG)
     if 0 in p_GD:
         for i in range(len(p_GD)):
